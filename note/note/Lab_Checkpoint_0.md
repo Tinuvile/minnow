@@ -207,7 +207,6 @@ public:
   void sendto( const Address& dest, std::string_view payload ); // 发送数据报
   void recv( Address& src, std::string& payload );              // 接收数据报
 };
-
 ```
 
 ### Writing webget
@@ -276,21 +275,6 @@ Test project /home/tinuvile/CS144Lab/build
 
 Total Test time (real) =   1.24 sec
 Built target check_webget
-
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
