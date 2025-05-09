@@ -42,7 +42,8 @@ void Printer::diagnostic( string_view test_name,
        << " failed after these steps:\n\n";
   unsigned int step_num = 0;
   for ( const auto& step : steps_executed ) {
-    cerr << "  " << step_num++ << "." << "\t" << with_color( step.color, step.text ) << "\n";
+    cerr << "  " << step_num++ << "."
+         << "\t" << with_color( step.color, step.text ) << "\n";
     print_debug_messages( step );
   }
   cerr << with_color( red, "  ***** Unsuccessful " + failing_step.text + " *****\n" );
@@ -52,7 +53,9 @@ void Printer::diagnostic( string_view test_name,
   cerr << with_color( red, exception_type ) << ": " << with_color( def, exception_message ) << "\n\n";
 }
 
-Printer::Printer() : is_terminal_( isatty( STDERR_FILENO ) or getenv( "MAKE_TERMOUT" ) ) {}
+Printer::Printer()
+  : is_terminal_( isatty( STDERR_FILENO ) or getenv( "MAKE_TERMOUT" ) )
+{}
 
 string Printer::with_color( int color_value, string_view str ) const
 {

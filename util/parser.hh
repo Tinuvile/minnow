@@ -21,8 +21,9 @@ class Parser
     uint64_t skip_ {};
 
   public:
-    explicit BufferList( std::ranges::range auto&& buffers )
-      requires std::is_convertible_v<decltype( std::move( *buffers.begin() ) ), Ref<std::string>>
+    explicit BufferList(
+      std::ranges::range auto&&
+        buffers ) requires std::is_convertible_v<decltype( std::move( *buffers.begin() ) ), Ref<std::string>>
     {
       for ( auto&& x : buffers ) {
         buffer_.emplace_back( std::move( x ) );
@@ -56,7 +57,9 @@ class Parser
   }
 
 public:
-  explicit Parser( std::ranges::range auto&& input ) : input_( std::forward<decltype( input )>( input ) ) {}
+  explicit Parser( std::ranges::range auto&& input )
+    : input_( std::forward<decltype( input )>( input ) )
+  {}
 
   bool has_error() const { return error_; }
   void set_error() { error_ = true; }

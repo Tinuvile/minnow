@@ -15,7 +15,9 @@
 class ExpectationViolation : public std::runtime_error
 {
 public:
-  explicit ExpectationViolation( const std::string& msg ) : std::runtime_error( msg ) {}
+  explicit ExpectationViolation( const std::string& msg )
+    : std::runtime_error( msg )
+  {}
 
   template<typename T>
   inline ExpectationViolation( const std::string& property_name, const T& expected, const T& actual )
@@ -129,7 +131,8 @@ class TestHarness
 
 protected:
   explicit TestHarness( std::string test_name, std::string_view desc, T&& object )
-    : test_name_( std::move( test_name ) ), obj_( std::move( object ) )
+    : test_name_( std::move( test_name ) )
+    , obj_( std::move( object ) )
   {
     auto run_only = test_only();
     if ( run_only and *run_only != test_name_ ) {
@@ -217,7 +220,9 @@ template<class T, typename Num>
 struct ExpectNumber : public Expectation<T>
 {
   Num value_;
-  explicit ExpectNumber( Num value ) : value_( value ) {}
+  explicit ExpectNumber( Num value )
+    : value_( value )
+  {}
   std::string description() const override { return name() + " = " + to_string( value_ ); }
   virtual std::string name() const = 0;
   virtual Num value( const T& ) const = 0;

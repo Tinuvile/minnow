@@ -16,13 +16,12 @@ class Ref
 
 public:
   // default constructor -> owned reference (default-constructed)
-  Ref()
-    requires std::default_initializable<T>
-    : obj_( std::in_place )
-  {}
+  Ref() requires std::default_initializable<T> : obj_( std::in_place ) {}
 
   // construct from rvalue reference -> owned reference (moved from original)
-  Ref( T&& obj ) : obj_( std::move( obj ) ) {} // NOLINT(*-explicit-*)
+  Ref( T&& obj )
+    : obj_( std::move( obj ) )
+  {} // NOLINT(*-explicit-*)
 
   // move constructor: move from original (owned or borrowed)
   Ref( Ref&& other ) noexcept = default;
@@ -48,7 +47,9 @@ public:
 
 #ifndef DISALLOW_REF_IMPLICIT_COPY
   // implicit copy via copy constructor -> owned reference (copied from original)
-  Ref( const Ref& other ) : obj_( other.get() ) {}
+  Ref( const Ref& other )
+    : obj_( other.get() )
+  {}
 
   // implicit copy via copy-assignment -> owned reference (copied from original)
   Ref& operator=( const Ref& other )
@@ -88,11 +89,7 @@ public:
   const T* operator->() const { return &get(); }
   T* operator->() { return &get_mut(); }
 
-  explicit operator std::string_view() const
-    requires std::is_convertible_v<T, std::string_view>
-  {
-    return get();
-  }
+  explicit operator std::string_view() const requires std::is_convertible_v<T, std::string_view> { return get(); }
 
   T release()
   {

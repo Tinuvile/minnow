@@ -70,7 +70,9 @@ public:
   void send( std::string_view payload );
 
 protected:
-  DatagramSocket( int domain, int type, int protocol = 0 ) : Socket( domain, type, protocol ) {}
+  DatagramSocket( int domain, int type, int protocol = 0 )
+    : Socket( domain, type, protocol )
+  {}
 
   //! Construct from a file descriptor.
   DatagramSocket( FileDescriptor&& fd, int domain, int type, int protocol = 0 )
@@ -82,11 +84,15 @@ protected:
 class UDPSocket : public DatagramSocket
 {
   //! \param[in] fd is the FileDescriptor from which to construct
-  explicit UDPSocket( FileDescriptor&& fd ) : DatagramSocket( std::move( fd ), AF_INET, SOCK_DGRAM ) {}
+  explicit UDPSocket( FileDescriptor&& fd )
+    : DatagramSocket( std::move( fd ), AF_INET, SOCK_DGRAM )
+  {}
 
 public:
   //! Default: construct an unbound, unconnected UDP socket
-  UDPSocket() : DatagramSocket( AF_INET, SOCK_DGRAM ) {}
+  UDPSocket()
+    : DatagramSocket( AF_INET, SOCK_DGRAM )
+  {}
 };
 
 //! A wrapper around [TCP sockets](\ref man7::tcp)
@@ -95,11 +101,15 @@ class TCPSocket : public Socket
 private:
   //! \brief Construct from FileDescriptor (used by accept())
   //! \param[in] fd is the FileDescriptor from which to construct
-  explicit TCPSocket( FileDescriptor&& fd ) : Socket( std::move( fd ), AF_INET, SOCK_STREAM, IPPROTO_TCP ) {}
+  explicit TCPSocket( FileDescriptor&& fd )
+    : Socket( std::move( fd ), AF_INET, SOCK_STREAM, IPPROTO_TCP )
+  {}
 
 public:
   //! Default: construct an unbound, unconnected TCP socket
-  TCPSocket() : Socket( AF_INET, SOCK_STREAM ) {}
+  TCPSocket()
+    : Socket( AF_INET, SOCK_STREAM )
+  {}
 
   //! Mark a socket as listening for incoming connections
   void listen( int backlog = 16 );
@@ -112,7 +122,9 @@ public:
 class PacketSocket : public DatagramSocket
 {
 public:
-  PacketSocket( const int type, const int protocol ) : DatagramSocket( AF_PACKET, type, protocol ) {}
+  PacketSocket( const int type, const int protocol )
+    : DatagramSocket( AF_PACKET, type, protocol )
+  {}
 
   void set_promiscuous();
 };
@@ -122,16 +134,22 @@ class LocalStreamSocket : public Socket
 {
 public:
   //! Construct from a file descriptor
-  explicit LocalStreamSocket( FileDescriptor&& fd ) : Socket( std::move( fd ), AF_UNIX, SOCK_STREAM ) {}
+  explicit LocalStreamSocket( FileDescriptor&& fd )
+    : Socket( std::move( fd ), AF_UNIX, SOCK_STREAM )
+  {}
 };
 
 //! A wrapper around [Unix-domain datagram sockets](\ref man7::unix)
 class LocalDatagramSocket : public DatagramSocket
 {
   //! \param[in] fd is the FileDescriptor from which to construct
-  explicit LocalDatagramSocket( FileDescriptor&& fd ) : DatagramSocket( std::move( fd ), AF_UNIX, SOCK_DGRAM ) {}
+  explicit LocalDatagramSocket( FileDescriptor&& fd )
+    : DatagramSocket( std::move( fd ), AF_UNIX, SOCK_DGRAM )
+  {}
 
 public:
   //! Default: construct an unbound, unconnected socket
-  LocalDatagramSocket() : DatagramSocket( AF_UNIX, SOCK_DGRAM ) {}
+  LocalDatagramSocket()
+    : DatagramSocket( AF_UNIX, SOCK_DGRAM )
+  {}
 };

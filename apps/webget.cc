@@ -16,9 +16,7 @@ void get_URL( const string& host, const string& path )
   socket.connect( Address( host, "http" ) );
 
   // 构建 HTTP 请求头
-  const string request = "GET " + path + " HTTP/1.0\r\n"
-                       + "Host: " + host + "\r\n"
-                       + "Connection: close\r\n\r\n";
+  const string request = "GET " + path + " HTTP/1.0\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n";
 
   // 发送 HTTP 请求
   socket.write( request );
@@ -26,7 +24,7 @@ void get_URL( const string& host, const string& path )
   // 读取直到连接关闭
   string buffer;
   while ( !socket.eof() ) {
-    socket.read(buffer);
+    socket.read( buffer );
     cout << buffer;
   }
 

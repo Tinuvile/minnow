@@ -23,7 +23,13 @@ public:
 
 protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
-  uint64_t capacity_;
+  std::string buffer_;      // Buffer to store data
+  uint64_t start_position_; // Position of the start of the buffer
+  uint64_t bytes_pushed_;   // Number of bytes pushed to the buffer
+  uint64_t bytes_popped_;   // Number of bytes popped from the buffer
+  bool closed_;             // Flag indicating whether the stream has been closed
+  bool eof_;                // Flag indicating whether the stream has reached its ending
+  uint64_t capacity_;       // Maximum capacity of the buffer
   bool error_ {};
 };
 

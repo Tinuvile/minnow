@@ -277,4 +277,196 @@ Total Test time (real) =   1.24 sec
 Built target check_webget
 ```
 
+---
 
+## An in-memory reliable byte stream
+
+这个任务需要我们实现字节流功能。这个字节流是有限容量的，写入的数据不能超过当前可用容量。当写入者写入数据时，如果缓冲区已满，只能写入部分数据。读取者可以读取数据，并从缓冲区中移除已读取的部分，这样释放空间，让写入者可以继续写入。同时，写入者可以关闭流，读取者在读取完所有数据后会到达EOF。
+
+```c
+class Writer : public ByteStream
+{
+public:
+  void push( std::string data ); // Push data to stream, but only as much as available capacity allows.
+  void close();                  // Signal that the stream has reached its ending. Nothing more will be written.
+
+  bool is_closed() const;              // Has the stream been closed?
+  uint64_t available_capacity() const; // How many bytes can be pushed to the stream right now?
+  uint64_t bytes_pushed() const;       // Total number of bytes cumulatively pushed to the stream
+};
+
+class Reader : public ByteStream
+{
+public:
+  std::string_view peek() const; // Peek at the next bytes in the buffer
+  void pop( uint64_t len );      // Remove `len` bytes from the buffer
+
+  bool is_finished() const;        // Is the stream finished (closed and fully popped)?
+  uint64_t bytes_buffered() const; // Number of bytes currently buffered (pushed and not popped)
+  uint64_t bytes_popped() const;   // Total number of bytes cumulatively popped from stream
+};
+```
+
+首先`ByteStream`需要维护一个缓冲区，我选用的是`std::string`。
+
+```c
+class ByteStream
+{
+public:
+  explicit ByteStream( uint64_t capacity );
+
+  // Helper functions (provided) to access the ByteStream's Reader and Writer interfaces
+  Reader& reader();
+  const Reader& reader() const;
+  Writer& writer();
+  const Writer& writer() const;
+
+  void set_error() { error_ = true; };       // Signal that the stream suffered an error.
+  bool has_error() const { return error_; }; // Has the stream had an error?
+
+protected:
+  // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
+  std::string buffer_;      // Buffer to store data
+  uint64_t start_position_; // Position of the start of the buffer
+  uint64_t bytes_pushed_;   // Number of bytes pushed to the buffer
+  uint64_t bytes_popped_;   // Number of bytes popped from the buffer
+  bool closed_;             // Flag indicating whether the stream has been closed
+  bool eof_;                // Flag indicating whether the stream has reached its ending
+  uint64_t capacity_;       // Maximum capacity of the buffer
+  bool error_ {};
+};
+```
+
+然后实现`Reader`和`Writer`的具体函数，比较简单。
+
+```c
+#include "byte_stream.hh"
+
+using namespace std;
+
+ByteStream::ByteStream( uint64_t capacity )
+  : buffer_()
+  , start_position_( 0 )
+  , bytes_pushed_( 0 )
+  , bytes_popped_( 0 )
+  , closed_( false )
+  , eof_( false )
+  , capacity_( capacity )
+  , error_( false )
+{}
+
+void Writer::push( string data )
+{
+  if ( closed_ || error_ )
+    return;
+
+  const uint64_t available = available_capacity();
+  const uint64_t byte_to_push = min( data.size(), available );
+
+  if ( byte_to_push > 0 ) {
+    buffer_.append( data.substr( 0, byte_to_push ) );
+    bytes_pushed_ += byte_to_push;
+  }
+}
+
+void Writer::close()
+{
+  closed_ = true;
+}
+
+bool Writer::is_closed() const
+{
+  return closed_;
+}
+
+uint64_t Writer::available_capacity() const
+{
+  return capacity_ - ( buffer_.size() - start_position_ );
+}
+
+uint64_t Writer::bytes_pushed() const
+{
+  return bytes_pushed_;
+}
+
+string_view Reader::peek() const
+{
+  return string_view( buffer_ ).substr( start_position_ );
+}
+
+void Reader::pop( uint64_t len )
+{
+  len = min( len, buffer_.size() - start_position_ );
+  start_position_ += len;
+  bytes_popped_ += len;
+
+  // if data_read is greater than 4 KB and half of the buffer is used,
+  // remove the unused part of the buffer
+  if ( start_position_ > 4096 && start_position_ >= buffer_.size() / 2 ) {
+    buffer_ = buffer_.substr( start_position_ );
+    start_position_ = 0;
+  }
+}
+
+bool Reader::is_finished() const
+{
+  return closed_ && ( start_position_ == buffer_.size() );
+}
+
+uint64_t Reader::bytes_buffered() const
+{
+  return buffer_.size() - start_position_;
+}
+
+uint64_t Reader::bytes_popped() const
+{
+  return bytes_popped_;
+}
+```
+
+运行测试。
+
+```bash
+tinuvile@LAPTOP-7PVP3HH3:~/CS144Lab$ cmake --build build --target check0
+Test project /home/tinuvile/CS144Lab/build
+      Start  1: compile with bug-checkers
+ 1/11 Test  #1: compile with bug-checkers ........   Passed    6.11 sec
+      Start  2: t_webget
+ 2/11 Test  #2: t_webget .........................   Passed    1.16 sec
+      Start  3: byte_stream_basics
+ 3/11 Test  #3: byte_stream_basics ...............   Passed    0.01 sec
+      Start  4: byte_stream_capacity
+ 4/11 Test  #4: byte_stream_capacity .............   Passed    0.01 sec
+      Start  5: byte_stream_one_write
+ 5/11 Test  #5: byte_stream_one_write ............   Passed    0.01 sec
+      Start  6: byte_stream_two_writes
+ 6/11 Test  #6: byte_stream_two_writes ...........   Passed    0.01 sec
+      Start  7: byte_stream_many_writes
+ 7/11 Test  #7: byte_stream_many_writes ..........   Passed    0.09 sec
+      Start  8: byte_stream_stress_test
+ 8/11 Test  #8: byte_stream_stress_test ..........   Passed    0.02 sec
+      Start 37: no_skip
+ 9/11 Test #37: no_skip ..........................   Passed    0.01 sec
+      Start 38: compile with optimization
+10/11 Test #38: compile with optimization ........   Passed    2.61 sec
+      Start 39: byte_stream_speed_test
+        ByteStream throughput (pop length 4096): 20.07 Gbit/s
+        ByteStream throughput (pop length 128):  14.28 Gbit/s
+        ByteStream throughput (pop length 32):   11.13 Gbit/s
+11/11 Test #39: byte_stream_speed_test ...........   Passed    0.14 sec
+
+100% tests passed, 0 tests failed out of 11
+
+Total Test time (real) =  10.16 sec
+Built target check0
+```
+
+提交前用`clang-format`统一代码风格。
+
+```c
+tinuvile@LAPTOP-7PVP3HH3:~/CS144Lab$ cmake --build build --target format
+[100%] Formatting source code...
+[100%] Built target format
+```
+
+这样就算完成了。

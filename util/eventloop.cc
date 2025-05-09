@@ -23,7 +23,9 @@ size_t EventLoop::add_category( const string& name )
 }
 
 EventLoop::BasicRule::BasicRule( size_t s_category_id, InterestT s_interest, CallbackT s_callback )
-  : category_id( s_category_id ), interest( move( s_interest ) ), callback( move( s_callback ) )
+  : category_id( s_category_id )
+  , interest( move( s_interest ) )
+  , callback( move( s_callback ) )
 {}
 
 EventLoop::FDRule::FDRule( BasicRule&& base,
